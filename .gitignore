@@ -1,0 +1,4 @@
+**/logs
+*.pyc
+**/.ipynb_checkpoints
+data/annotations/*

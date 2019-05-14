@@ -1,0 +1,24 @@
+#!/bin/bash --login
+########## Define Resources Needed with SBATCH Lines ##########
+ 
+#SBATCH --time=14:00:00             # limit of wall clock time - how long the job will run (same as -t)
+#SBATCH --ntasks=1                  # number of tasks - how many tasks (nodes) that you require (same as -n)
+#SBATCH --cpus-per-task=20           # number of CPUs (or cores) per task (same as -c)
+#SBATCH --mem=50G                    # memory required per node - amount of memory (in bytes)
+#SBATCH --job-name DomainSearch      # you can give your job a name for easier identification (same as -J)
+#SBATCH --account shadeash-colej 
+
+
+MY_PATH=/mnt/research/germs/shane/transActRNA/data
+cd $MY_PATH
+
+hmmsearch --max --cpu 20 --pfamtblout $MY_PATH/hmm/Cas9-Like_phi.pfamtbl --tblout $MY_PATH/hmm/Cas9-Like_phi.tbl --domtblout $MY_PATH/hmm/Cas9-Like_phi.faa.domtbl $MY_PATH/hmm/phi_domains.hmm $MY_PATH/proteins/All_Cas9-Like.faa > $MY_PATH/hmm/Cas9-Like_phi.faa.log
+
+
+##hmmsearch --max --cpu 20 --pfamtblout $MY_PATH/domains/DiverseCas9s_uniref.pfamtbl --tblout $MY_PATH/domains/DiverseCas9s_uniref.tbl --domtblout $MY_PATH/domains/DiverseCas9s_uniref.domtbl $MY_PATH/DiverseCas9s.faa.hmm $MY_PATH/domains/uniref90.fasta > $MY_PATH/domains/DiverseCas9s_uniref.log
+
+#hmmsearch --max --cpu 20 --pfamtblout $MY_PATH/domains/DiverseCas9s_uniref.pfamtbl --tblout $MY_PATH/domains/DiverseCas9s_uniref.tbl --domtblout $MY_PATH/domains/DiverseCas9s_uniref.domtbl $MY_PATH/DiverseCas9s.faa.hmm $MY_PATH/domains/uniref90.fasta > $MY_PATH/domains/DiverseCas9s_uniref.log
+
+##hmmsearch --max --cpu 20 --pfamtblout $MY_PATH/domains/Cas9-Like-clustered.pfamtbl --tblout $MY_PATH/domains/Cas9-Like-clustered.tbl --domtblout $MY_PATH/domains/Cas9-Like-clustered.faa.domtbl $MY_PATH/domains/Pfam-A.full.hmm $MY_PATH/Cas9-Like-clustered.faa > $MY_PATH/domains/Cas9-Like-clustered.faa.log
+
+##hmmsearch --max --cpu 20 --pfamtblout $MY_PATH/domains/DiverseCas9s1.pfamtbl       --tblout $MY_PATH/domains/DiverseCas9s1.tbl       --domtblout $MY_PATH/domains/DiverseCas9s1.domtbl           $MY_PATH/domains/Pfam-A.full.hmm $MY_PATH/DiverseCas9s.faa        > $MY_PATH/domains/DiverseCas9s_Log_1.log

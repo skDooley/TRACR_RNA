@@ -1,0 +1,26 @@
+#!/bin/bash
+# Number of nodes needed:
+#SBATCH --nodes=1
+#
+# Tasks per node:
+#SBATCH --ntasks-per-node=1
+#
+# Processors per task:
+#SBATCH --cpus-per-task=1
+#
+# Memory per node:
+#SBATCH --mem=5G
+#
+# Wall time 
+#SBATCH --time=1:00:00
+# 
+# Mail type:
+##SBATCH --mail-type=END
+#
+# Mail user:
+##SBATCH --mail-user=dooley.shanek@gmail.com
+#
+# Priority flag
+#SBATCH --account shadeash-colej 
+
+cd /mnt/research/germs/shane/transActRNA/data
