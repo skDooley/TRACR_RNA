@@ -9,8 +9,8 @@ try:
 	from Bio.SeqFeature import SeqFeature, FeatureLocation
 	from Bio import SeqIO
 	from Bio.Data import CodonTable
-except ImportError:
-	sys.exit("Missing Biopython library")
+except ImportError: sys.exit("Missing Biopython library")
+
 
 class GetORFs:
 	table_obj = CodonTable.ambiguous_generic_by_id[1]
@@ -20,13 +20,15 @@ class GetORFs:
 	stops = sorted(table_obj.stop_codons)
 	re_stops = re.compile("|".join(stops))
 
-	def __init__(self, inputfile, outputfile, cutoff=50):
+	def __init__(self, inputfile, outputfile=None, cutoff=50,writeOutPut=True):
 		self.inputFile = inputfile
 		self.records = {}
 		self.cutoff = cutoff
 		self.outputFile = outputfile
 		self.Seqlist = []
-		self.writeOutPut()
+		self.parseRecs()
+		if writeOutPut: self.write()
+
 		#self.data = []
 
 	def start_chop_and_trans(s, strict=True):
@@ -93,8 +95,7 @@ class GetORFs:
 		answer.sort()
 		return answer
 
-	def writeOutPut(self):	
-		#out_file = open(self.outputFile, "w")		
+	def parseRecs(self):	
 		in_count = 0
 		out_count = 0		
 		for record in SeqIO.parse(self.inputFile, GetORFs.seq_format, generic_dna):
@@ -112,7 +113,6 @@ class GetORFs:
 				self.records[record.id].features.append(ORF_Feature)
 				self.Seqlist.append(t)
 			in_count += 1
-		self.write()   #nice_strand = '+' if f_strand == +1 else '-'
 		# print "Found %i %ss in %i sequences" % (out_count, "ORF", in_count)
 
 	def write(self):

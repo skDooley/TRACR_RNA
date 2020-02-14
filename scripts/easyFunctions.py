@@ -3,6 +3,7 @@ from Bio import AlignIO, pairwise2
 from Bio.Blast import NCBIXML
 from Bio.Align.Applications import ClustalwCommandline
 from Bio.Blast.Applications import NcbiblastnCommandline
+from Bio.Seq import Seq
 from Bio.SubsMat import MatrixInfo as matlist
 from collections import Counter
 from random import randint
@@ -11,6 +12,7 @@ import os
 from pickle import dump as pcklDump, load
 import random
 import sys
+from sys import stderr
 import tempfile
 
 IUPACS = {
@@ -22,18 +24,33 @@ IUPACS = {
 '[A/G/C]':'V','[A/C/G]':'V','[G/A/C]':'V', '[G/C/A]':'V','[C/A/G]':'V','[C/G/A]':'V', 
 '[A/C/T/G]':'N' }
 
+def comma(number): return "{:,}".format(number)
+
 def dump(dmpObj,fname):
     print ("\nDumping "+ fname)
     pcklDump(dmpObj,open(fname,"wb"))
 
+def RC(seq): return str(Seq(seq).reverse_complement())
+
 class Coordinate:
-    def __init__(self,start,end): self.start = int(start); self.end = int(end); self.strand = (self.end > self.start)
+    def __init__(self,start,end): 
+        self.strand = (start < end)
+        self.start = min(int(start),int(end)); 
+        self.end = max(int(start),int(end)); 
+    
+    def __eq__(self,other): return (self.start == other.start and self.end == other.end) or (self.start == other.end and self.end == other.start)
+    def __lt__(self,other): return self.start < other.start
+    def __gt__(self,other): return self.start > other.start
+    def __ne__(self,other): return not self.__eq__(other)
+    def __hash__(self): return hash(str(self.start)+"_"+str(self.end))
+    def __str__(self): 
+        dir = "+"
+        if not self.strand:dir = "-"
+        return "[%s\t%s] %s" % (min(self.start,self.end),max(self.start,self.end),dir)
+    def __sub__(self,other):return abs(self.start-other.start)+abs(self.end-other.end)
+    def __len__(self):return max(self.start,self.end)-min(self.start,self.end)
     def contains(self,other): return self.start <= other.start and other.end <= self.end
-    def __eq__(self,other): return (self.start == other.start and self.end == other.end) or \
-                                   (self.start == other.end and self.end == other.start)
-        
-    def overlaps(self,other):
-        #Equal if they overlap or 1 contains the other
+    def overlaps(self,other): # overlaps if 1 contains the other or they overlap
         if self.start>self.end:
             startBetween = self.end <= other.start and other.start <= self.start 
             endBetween = self.end <= other.end and other.end <= self.start
@@ -42,21 +59,12 @@ class Coordinate:
             endBetween = self.start <= other.end and other.end <= self.end
         contains = self.contains(other) or other.contains(self)
         return startBetween or endBetween or contains
-
     def distance(self,other):
         if self.overlaps(other):return 0
         return min(abs(self.start-other.start),
                    abs(self.start-other.end),
                    abs(self.end-other.start),
                    abs(self.end-other.end))
-    def __ne__(self,other): return not self.__eq__(other)
-    def __hash__(self): return hash(self.start)
-    def __str__(self): 
-        dir="+"
-        #if not self.strand:dir="-"
-        return "[%s\t%s]%s" % (min(self.start,self.end),max(self.start,self.end),dir)
-    def __sub__(self,other):return abs(self.start-other.start)+abs(self.end-other.end)
-    def __len__(self):return max(self.start,self.end)-min(self.start,self.end)
 
 class MakeFasta:
     def __init__(self,fileName): 
@@ -67,19 +75,79 @@ class MakeFasta:
     def close(self): self.fileHandle.close()
     def die(self):os.system("rm "+self.fileHandle.name)
 
+class revDict(dict):
+    def __init__(self):
+        self.revMap = {}
+        self.fwd = {}
+    def __setitem__(self,key,value):
+        self.fwd[key] = value
+        try: self.revMap[value].add(key)
+        except: self.revMap[value]= set([key])
+    def __getitem__(self,key):
+        try: return self.fwd[key]
+        except: return self.revMap[key]
+    def __iter__(self): return iter(self.fwd)
+    def items(self,valMap=False):
+        if valMap: return iter(self.revMap.items())
+        return iter(self.fwd.items())
+
+class seqDict(dict):
+    def __init__(self):
+        self.assemblyToChr = {}
+        self.assemblyToProt = {}
+        self.protToAsm = {}
+        self.protToChr = {}
+        self.chrToAsm = {}
+        self.chrToProt = {}
+    def __setitem__(self,assembly,value):
+        chrm, prot = value
+        try: self.assemblyToChr[assembly].add(chrm)
+        except: self.assemblyToChr[assembly] = set([chrm])
+        try: self.assemblyToProt[assembly].add(prot)
+        except: self.assemblyToProt[assembly] = set([prot])
+        self.protToAsm[prot] = assembly
+        self.protToChr[prot] = chrm 
+        self.chrToAsm[chrm] = assembly
+        try: self.chrToProt[chrm].add(prot)
+        except: self.chrToProt[chrm] = set([prot])
+    def __getitem__(self,key):
+        try: return self.protToAsm[key]
+        except: return self.chrToAsm[key]
+
 def createBLASTdb(refFileName):
     outputDBName = "blastDBs/" + refFileName[refFileName.rfind("/")+1:]
     cmd = "makeblastdb -in %s -dbtype \"nucl\" -out %s >/dev/null" %(refFileName,outputDBName)
     runStatus = os.system(cmd)
-#    print cmd,runStatus
+    # print cmd,runStatus
     return outputDBName,runStatus
-
+    
 def BLAST_short(fragmentFile,sequenceFile,outputName):
     coords = []
     sequenceFileDB,runStatus = createBLASTdb(sequenceFile)
     if runStatus == 0:
         NcbiblastnCommandline(cmd='blastn', out=outputName, outfmt=5, query=fragmentFile, strand="both", dust="no", db=sequenceFileDB, evalue=0.001, word_size=7)() #reward=1,penalty=-3,
         return NCBIXML.parse(open(outputName,'r'))
+    else: print("Failed to create blastDB %s" % (sequenceFile),file=stderr)
+
+def createDIAMONDdb(sequenceFile):
+    outputDBName = "blastDBs/" + refFileName[refFileName.rfind("/")+1:]
+    cmd = "diamond makedb -in %s -d %s" %(refFileName,outputDBName)
+    runStatus = os.system(cmd)
+    if runStatus != 0: return
+
+    # print cmd,runStatus
+    return outputDBName,runStatus
+
+def BLAST_Diamond(fragmentFile,sequenceFile,outputName): sequenceFileDB,runStatus = createDIAMONDdb(sequenceFile)
+
+def parseBLAST(results,coordsOnly=True): #TODO:Currently coords only is the only supported parsing method
+    coords = []
+    for result in results:
+        for alignment in result.alignments:
+            for hsp in alignment.hsps: 
+                if hsp.strand[0] is not None: print( hsp.strand+"WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW")
+                coords.append(Coordinate(hsp.sbjct_start-1,hsp.sbjct_end))
+    return coords
 
 def parseSingleBLAST(results): # For single blast ID because the results are all the same subject
         coords = []
@@ -87,10 +155,10 @@ def parseSingleBLAST(results): # For single blast ID because the results are all
             for alignment in result.alignments:
                 for hsp in alignment.hsps: 
                     if hsp.strand[0] is not None: print( hsp.strand+"WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW")
-#                    print (hsp)
-#                    if hsp.expect < 0.00005:
+                    # print (hsp)
+                    # if hsp.expect < 0.00005:
                     coords.append(Coordinate(hsp.sbjct_start-1,hsp.sbjct_end))
-#                    coords.append([hsp.sbjct_start-1,hsp.sbjct_end])
+                    # coords.append([hsp.sbjct_start-1,hsp.sbjct_end])
         coords.sort(key=lambda x: x.start)
         return coords
 
@@ -109,9 +177,9 @@ def alignSequence(refSeq,fragment):
 def alignSeqs(sequenceDict):
     counter = 0
     newFasta = MakeFasta(tempfile.NamedTemporaryFile(delete=False))
-    for ID,seqDict in sequenceDict.iteritems(): 
+    for ID,seqDict in sequenceDict.items(): 
         if type(seqDict) == type(1): seqDict = sequenceDict
-        for seq,count in seqDict.iteritems():
+        for seq,count in seqDict.items():
             for times in range(count):
                 newFasta.write("Seq%i" % counter,seq)
                 counter +=1
@@ -141,7 +209,7 @@ def calc_consensus_seq(sequenceList,useIUPACs=False):
                 if percentGaps <= 25.0 :del bases['-'] #Assumption is there is only a small percentaget then ignore it
             if "-" not in bases and len(bases)>1:
                 combinedBases = "[%s]" % ("/".join(bases))
-#                if combinedBases == "[A/C/T/G]": print (bases)
+               # if combinedBases == "[A/C/T/G]": print (bases)
                 consensus += IUPACS[combinedBases]
             elif "-" not in bases: consensus += baseCounter[0][0]
             elif percentGaps >= 75.0: pass #Asssumption, if there are a greater number of - then bases skip the position
@@ -175,33 +243,38 @@ r = lambda: randint(0,255)
 def color():return '#%02X%02X%02X' % (r(),r(),r())
 
 class ClusterDict(dict):
-    def __init__(self):
+    def __init__(self,nType):
         self.revMap = {}
         self.curID = ""
+        self.nType = nType
     def newCluster(self,ID): 
-        self[ID] = Cluster(ID)
+        self[ID] = Cluster(ID,self.nType)
         self.curID = ID
     def add(self,line):
         seqID = self[self.curID].add(line)
         self.revMap[seqID] = self.curID
     def filter(self,cutoff=100):
-        for id, cluster in self.iteritems():
-            for seqID, perc in cluster.members.iteritems():
+        for id, cluster in self.items():
+            for seqID, perc in cluster.members.items():
                 if perc < cutoff: yield seqID, cluster.dirs[seqID]
             
-
 class Cluster():
-    def __init__(self,clusterName):
+    def __init__(self,clusterName,nType):
         self.name = clusterName
         self.members = {} #{SeqID:perc}   The percent identity to the representative sequence
         self.dirs = {}    #{SeqID:strand} Sequence direction relative to the representative sequence
+        self.nType = nType
     def __len__(self): return len(self.members)
     def add(self,line):
         seqID = line[line.find(">")+1:line.find("...")] 
         percIndex = line.find("%")
         if (percIndex != -1):
-            perc = float(line[line.find("/")+1:percIndex])
-            direction = (line[line.find("/")-1:line.find("/")] == "+")
+            if self.nType:
+                perc = float(line[line.find("/")+1:percIndex])
+                direction = (line[line.find("/")-1:line.find("/")] == "+")
+            else:
+                perc = float(line[line.rfind(" ")+1:percIndex])
+                direction = True
         else:
             perc = 0.0
             direction = True
@@ -211,21 +284,15 @@ class Cluster():
     def __iter__(self): return self.members.__iter__()
 
 def processClusterFile(tracrFile):
-    clusterResults = ClusterDict()
+    clusterResults = ClusterDict(".faa" not in tracrFile)
     for line in open(tracrFile):
         if ">Cluster" in line: clusterResults.newCluster(line.strip().replace(">",""))
         else: clusterResults.add(line)
-#            sequenceID = line[line.find(">")+1:line.find(".")] 
-#            seqID = seqID[:seqID.rfind("_")]
-#            try:allClusters[clusterID].add(seqID)
-#            except:allClusters[clusterID]=set([seqID])
-#            try:allClusterSeqIDs[seqID].add(clusterID)
-#            except:allClusterSeqIDs[seqID]=set([clusterID])
     return clusterResults
 
 def generateTreeColors(allClusters,cutoff=5):
     remove, colors, TreeColors, clusterDist=set(), {}, {}, []
-    for cluster, ids in allClusters.iteritems():
+    for cluster, ids in allClusters.items():
         clusterDist.append(len(ids))
         if len(ids) < cutoff: remove.add(cluster)
         else:
@@ -236,6 +303,7 @@ def generateTreeColors(allClusters,cutoff=5):
     print ("\tNumber of nodes covered: %i" % len(TreeColors))
     
     return TreeColors, clusterDist
+
 
 
 #looking through gbk files
