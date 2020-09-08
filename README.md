@@ -5,12 +5,19 @@
 To install all dependencies required by these notebooks and scripts, create a named environment using conda and the environment.yml in this repository. If you do not have access to conda, you are doing bioinformatics, it is time to download it [here](https://docs.anaconda.com/anaconda/install/)! Otherwise, here are the steps:
 
 1. Clone the github repository
+	
 	<addr>git clone [https://github.com/skDooley/TRACR_RNA.git](https://github.com/skDooley/TRACR_RNA.git)</addr>
+
 1. Navigate into the directory the TRACR_RNA directory
+
    cd TRACR_RNA 
+
 1. Create an environment from the environment.yml file
+
 	conda env create -f environment.yml
+
 1. activate the environment
+
 	conda activate cas
 
 Once these steps are complete, you are ready to launch Jupyter Notebook server and begin finding CRISPR-Cas systems and tracrRNAs.
