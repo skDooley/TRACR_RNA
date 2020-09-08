@@ -1,0 +1,116 @@
+# hmmsearch :: search profile(s) against a sequence database
+# HMMER 3.2.1 (June 2018); http://hmmer.org/
+# Copyright (C) 2018 Howard Hughes Medical Institute.
+# Freely distributed under the BSD open source license.
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# query HMM file:                  hmm/Cas9.hmm
+# target sequence database:        hmm/results/GCF_000008945.1.orfs
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+Query:       Cas9  [M=1039]
+Scores for complete sequences (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Sequence             Description
+    ------- ------ -----    ------- ------ -----   ---- --  --------             -----------
+     2e-129  427.8   0.0   1.7e-128  424.7   0.0    1.8  1  NC_010816.1_ORF78929  length 1187 aa, 3564 bp, from 2257993..
+
+
+Domain annotation for each sequence (and alignments):
+>> NC_010816.1_ORF78929  length 1187 aa, 3564 bp, from 2257993..2261556 of NC_010816.1 Bifidobacterium longum DJO10A, co
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !  424.7   0.0  6.4e-131  1.7e-128       4    1029 ..      41    1175 ..      33    1186 .. 0.81
+
+  Alignments for each domain:
+  == domain 1  score: 424.7 bits;  conditional E-value: 6.4e-131
+                  Cas9    4 kyilGLDlGtnSiGwAvvdeeekdkpkriidlgvrifdeaed.skng..eslaaeRRakRgaRRrlrRrklRlrrllellekegl.l 86  
+                            +y++G+D+G nS+G+A v+ + +++p r+++  ++i+d ++d +kn+  +++++    +R++RR +rR+++Rl +l+ ll k g  +
+  NC_010816.1_ORF78929   41 RYRIGIDVGLNSVGLAAVEVSDENSPVRLLNAQSVIHDGGVDpQKNKeaITRKNMSGVARRTRRMRRRKRERLHKLDMLLGKFGYpV 127 
+                            8********************999******************7555578************************************64 PP
+
+                  Cas9   87 .pkeklefkdkekk.ptiyeLRkkaltekldl.....eelgraLyhlakrRGfkserkee....keeadkEklgkikeaikeleell 162 
+                             ++e+l+      k ++ +++R++++t+ ++      e +  aL h+a++RG+++   +     ++++ ++++g++ke+ k++++  
+  NC_010816.1_ORF78929  128 iEPESLD------KpFEEWHVRAELATRYIEDdelrrESISIALRHMARHRGWRNPYRQVdsliSDNPYSKQYGELKEKAKAYNDDA 208 
+                            4699999......44999*********775552233377788*************999996666555558889******88877777 PP
+
+                  Cas9  163 ke.kgektvgeylvkrlkengk....lrkr.......ekgdynyviprqlyeeElekilekqaklhpellteelieklesilffqrp 237 
+                            ++ ++e t+++++v++l+ + +    lr+r       ++g    +  +++ ++El++i+++q+        +e++  ++s+++   p
+  NC_010816.1_ORF78929  209 TAaEEESTPAQLVVAMLDAGYAeaprLRWRtgskkpdAEGYLPVRLMQEDNANELKQIFRVQR-----VPADEWKPLFRSVFYAVSP 290 
+                            77466*********888877777777999988877755555589999***************9.....34578999*********** PP
+
+                  Cas9  238 lyksikkligkctfekdekrapkssplyqefrllnelnnlrikrk.knerplteeereklfeelfkk..kkvtfkklrklleklske 321 
+                               s ++++g++++ +++ ra k+s+ +qe+r+ n ++nlrik+  ++ r+lt +e++ ++++l +   +++t+++l ++l + +k 
+  NC_010816.1_ORF78929  291 K-GSAEQRVGQDPLAPEQARALKASLAFQEYRIANVITNLRIKDAsAELRKLTVDEKQSIYDQLVSPssEDITWSDLCDFL-G-FKR 374 
+                            *.****************************************988899999***************97678**********.8.566 PP
+
+                  Cas9  322 eefkgl..................lkgketkaslrsykk....lkk....ilkeeelseekleeiihlltvyedkeelkeklkkel. 381 
+                             ++kg+                          s++++++    ++k    ++k  + s ++ e++i+ll++  d ++++e  +++  
+  NC_010816.1_ORF78929  375 SQLKGVgsltedgeerissrpprlT-------SVQRIYEsdnkIRKplvaWWK--SASDNEHEAMIRLLSNTVDIDKVREDVAYASa 452 
+                            6667887777766666544433321.......222222233344446666999..9*************999999999999999554 PP
+
+                  Cas9  382 .....glseeeieklakl.lksgygslSlkairkilpalreg.ksyseavk.eagfdekekeqkkklePylddkkelirnpvvkral 460 
+                                 gl++++++kl ++ l+sg++ +S ++++k++ ++    ++ +ea k + ++++ ++   + +        e ++np+v+r+l
+  NC_010816.1_ORF78929  453 iefidGLDDDALTKLDSVdLPSGRAAYSVETLQKLTRQMLTTdDDLHEARKtLFNVTDSWRPPADPI-------GEPLGNPSVDRVL 532 
+                            555667*********************************99536666****4448888766555555.......69*********** PP
+
+                  Cas9  461 nqlrkvvnelikkygkkpdeIviElarElkks....aeerkkikkrqkknekknkkakeklkeenglk.psrkdikklrLweeqkgk 542 
+                            +++ + + ++ +++g  p +++iE+ r + +s    ++++++ +k+++k++  + +++e+l+++++++  +++d ++l  +++q+g+
+  NC_010816.1_ORF78929  533 KNVNRYLMNCQQRWG-NPVSVNIEHVRSSFSSvafaRKDKREYEKNNEKRSIFRSSLSEQLRADEQMEkVRESDLRRLEAIQRQNGQ 618 
+                            ***************.*************999888788888999999999999999999998866666269**************** PP
+
+                  Cas9  543 cpYtgktIslsdllgdnkyeiDHIiPrsls.ldDSlaNkvlvekeeNreKgnrtpyeafgndka....kssweeiekrvedllk... 621 
+                            c+Y+g+tI+    +    +e+DHI+Pr  +   ++++N   v++e+Nr K+ +tp+  ++++++      s++e +krv +++    
+  NC_010816.1_ORF78929  619 CLYCGRTIT----F--RTCEMDHIVPRKGVgSTNTRTNFAAVCAECNRMKS-NTPFAIWARSEDaqtrGVSLAEAKKRVTMFTFnpk 698 
+                            *********....5..8***********96589******************.578888855444458999********999776886 PP
+
+                  Cas9  622 .kkiskkKr..krLlkedeqldeeekegfiaRqlndtryitkkaaeyLkeifkke...............kkkkvvavkGslTselR 690 
+                             ++ ++ K+  +  +++   +++e++    +R+++  ++++ ++++ ++ +f+ +                k+ v +++G++T+  R
+  NC_010816.1_ORF78929  699 sYAPREVKAfkQAVIARL--QQTEDDAAIDNRSIESVAWMADELHRRIDWYFNAKqyvnsasiddaeaetMKTTVSVFQGRVTASAR 783 
+                            632233333222234444..7899*****************************99******************************** PP
+
+                  Cas9  691 klwgln.......kekkrredhrHHAiDAivialisqslvqrlnklnaskerenkk..................tg..eklfpepWe 750 
+                            ++ g++       +++k r d rHHA+DA via+++ + +q l + ++ +e  +++                  t+  e++  + W 
+  NC_010816.1_ORF78929  784 RAAGIEgkihfigQQSKTRLDRRHHAVDASVIAMMNTAAAQTLMERESLRE--SQRliglmpgerswkeypyegTSryESF--HLWL 866 
+                            ****99999999999***************************999997554..3334444443333334444332243333..2233 PP
+
+                  Cas9  751 ....gfredvkkkle..kilvsrkpkek.vrgqlhketiygerekpikkdeekyverkklkdlkgkklekiekivekeadpklrekl 830 
+                                 ++e ++++l+  +i v + +++   +  +h++ti+                + +l ++  ++      ++++ + p l+ +l
+  NC_010816.1_ORF78929  867 dnmdVLLELLNDALDndRIAVMQSQRYVlGNSIAHDATIHPLE-------------KVPLGSAMSAD------LIRRASTPALWCAL 934 
+                            4555888888999996666666666666667778999999964.............56677777677......33344589999999 PP
+
+                  Cas9  831 kkhleeydndkk.pknafakeelekankkkgklirkvriyekkkke.......dikikkkikkvvet.gnnvhvdiyenl..kkdgk 906 
+                             + l  yd+++  p+     +       ++++++ + r+ ++++         +i+++++  +     +  +h ++y+ +  +   k
+  NC_010816.1_ORF78929  935 TR-LPDYDEKEGlPE-----D------SHREIRVHDTRYSADDEMGffasqaaQIAVQEGSAD---IgSAIHHARVYRCWktN--AK 1004
+                            98.888888866332.....3......457788888888865555456655557777774223...23669999999999642..22 PP
+
+                  Cas9  907 l...keeelvsifsaderqk..........................klidekakfvfsLkkgdlleikrk...lkenekely.lidk 960 
+                                  + ++++f+ d  +                           +l+  +a+ + sL+ gd +e++               +i++
+  NC_010816.1_ORF78929 1005 GvrkYFYGMIRVFQTDLLRAchddlftvplppqsismrygeprvvqALQSGNAQYLGSLVVGDEIEMDFSsldV-------DgQIGE 1084
+                            22357899999999999999**************************9999999************995333332.......222222 PP
+
+                  Cas9  961 .............skrlyrvq.kestgrlelkphlesrkkk...kddkkinqsitk.......kksieakkaenlikvrvdelGkit 1023
+                                           +++ v+ + ++ +l+++p   +++     ++d+ +++ ++k          +++ +++ ++ vr +++G+ +
+  NC_010816.1_ORF78929 1085 ylqffsqfsggnlAWKHWVVDgFFNQTQLRIRPRYLAAEGLakaFSDDVVPDGVQKivtkqgwLPPVNTASKTAVRIVRRNAFGEPR 1171
+                            3333445777888789******999999999999999998899*889999999999999899988899999999*******999755 PP
+
+                  Cas9 1024 kevkke 1029
+                               ++ 
+  NC_010816.1_ORF78929 1172 L--SSA 1175
+                            5..233 PP
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query model(s):                            1  (1039 nodes)
+Target sequences:                        271  (252969 residues searched)
+Passed MSV filter:                        16  (0.0590406); expected 5.4 (0.02)
+Passed bias filter:                       15  (0.0553506); expected 5.4 (0.02)
+Passed Vit filter:                         2  (0.00738007); expected 0.3 (0.001)
+Passed Fwd filter:                         1  (0.00369004); expected 0.0 (1e-05)
+Initial search space (Z):                271  [actual number of targets]
+Domain search space  (domZ):               1  [number of targets reported over threshold]
+# CPU time: 0.07u 0.01s 00:00:00.08 Elapsed: 00:00:00.07
+# Mc/sec: 3376.82
+//
+[ok]
