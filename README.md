@@ -6,11 +6,11 @@ To install all dependencies required by these notebooks and scripts, create a na
 
 1. Clone the github repository
 	
-	<addr>git clone [https://github.com/skDooley/TRACR_RNA.git](https://github.com/skDooley/TRACR_RNA.git)</addr>
+	``git clone https://github.com/skDooley/TRACR_RNA.git``
 
 1. Navigate into the directory the TRACR_RNA directory
 
-   cd TRACR_RNA 
+   ``cd TRACR_RNA``
 
 1. Create an environment from the environment.yml file
 
