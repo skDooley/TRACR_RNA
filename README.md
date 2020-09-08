@@ -1,7 +1,7 @@
 # The identification of tracrRNAs in genomic assemblies
 
 
-#### Installation
+### Installation
 To install all dependencies required by these notebooks and scripts, create a named environment using conda and the environment.yml in this repository. If you do not have access to conda, you are doing bioinformatics, it is time to download it [here](https://docs.anaconda.com/anaconda/install/)! Otherwise, here are the steps:
 
 1. Clone the github repository
@@ -23,7 +23,7 @@ To install all dependencies required by these notebooks and scripts, create a na
 Once these steps are complete, you are ready to launch Jupyter Notebook server and begin finding CRISPR-Cas systems and tracrRNAs.
 
 
-#### Usage
+### Usage
 The python notebooks here were created to work together (See the <font style="color:red">note</font>font> below if you want to pluggin results from a different CRISPR-Cas finding tool). Within the notebooks themselves, all user input is identified by a coding cell descripton with the red background of jupyter notebook markdown warnings. All cells with a green background above the coding cells can be run without user input.
 
 **CRISPR_CasFinding.ipynb** takes a directory (or directories) and recursively walks through the directory to identify any files with the extensions: fasta, fna, or fa. The notebook then provides code to create bash scripts to search for CRISPR arrays and proteins that are similary to those found in data/proteins/DiverseCas9s.faa. Additionally, CRISPR_CasFinding.ipynb also uses data/hmm/phi_domains.hmm to identify the 3 RuvC subdomains and the HNH domain of all the assemblies found using the hmm.
