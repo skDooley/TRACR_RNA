@@ -1,0 +1,36 @@
+
+Training set:	"/mnt/home/dooleys1/bin/Arnold/rho-indep.epn":
+		1201 sequences of length 71
+Cutoff:		5.53  
+
+Database:	"sequences/antiCandidates/NZ_CP031634.1_ORF69672.fasta"
+		1411 nucleotides to be processed in 4 sequences
+		ATGC ratios: 0.345  0.328  0.145  0.182
+E-value at cutoff 5.5 for 1.4Kb double strand data: 2.31e+00
+
+>NZ_CP031634.1_ORF69672_1057751_1058135_U
+FW   1     192..249      7.86  6.90e-01
+TCAATCAT.cgtagtcacctcatctatagtgtactact-.TTGATTGA.-.TTTTGTCATTATG
+>NZ_CP031634.1_ORF69672_1057751_1058135_U
+RC   1     178..236      8.28  5.43e-01
+TCAATCAA.agtagtacactatagatgaggtgactacg-.ATGATTGA.t.TTTATTATTTCTA
+>NZ_CP031634.1_ORF69672_1064758_1065134_D
+FW   1      67..97       17.10  6.54e-04
+GGCACCGA.g-----------------------------.TCGGTGCT.t.TTTTTTGATACTT
+FW   2     126..161      14.17  9.29e-03
+ACAAGCGC.tttcaaa-----------------------.ACGCTTGT.-.TTTATCATTCTAC
+FW   3     175..221      7.81  7.08e-01
+CATCTTGC.taaacctactaagctcc-------------.ACAGGATG.a.TTTCGTAAACTAT
+>NZ_CP031634.1_ORF69672_1064758_1065134_D
+RC   1      53..83       7.95  6.57e-01
+AGCACCGA.c-----------------------------.TCGGTGCC.a.CTTTTTCAAGTTG
+RC   2     114..147      15.90  2.05e-03
+CAAGCGTT.ttgaa-------------------------.AGCGCTTG.-.TTTTTTAGTTTGC
+
+-------- at level 1 --------
+2822 bases processed
+cutoff: 5.53
+62 config. per site
+19 hits
+7 independent hits
+
