@@ -14,11 +14,11 @@ To install all dependencies required by these notebooks and scripts, create a na
 
 1. Create an environment from the environment.yml file
 
-	conda env create -f environment.yml
+	``conda env create -f environment.yml``
 
 1. activate the environment
 
-	conda activate cas
+	``conda activate cas``
 
 Once these steps are complete, you are ready to launch Jupyter Notebook server and begin finding CRISPR-Cas systems and tracrRNAs.
 
@@ -31,9 +31,9 @@ The python notebooks here were created to work together (See the <font style="co
 **IdentifingTracrRNAs.ipynb** uses the fasta and pickled files created with CRISPR_CasFinding.ipynb to find potential tracrRNA sequence/structural homologs. No additional input is required, but the only input cell can be changed to changed to point to a different fasta file. 
 
 
-
 <font style="color:red">
  It is possible to use notebooks separately, but data needs to be processed into objects that are recognized by the code in the notebook(s) you want to use. If you choose to not use the CRISPR-Cas finding options, determine how to plug your results into the objects in scripts/CRISPRtools.py. Once your results are parsed into the CRISPRtools' objects, pickle the CasOperons objects. See "Process the CRISPR results" and "Read the HMM results and create protein and nucleotide sequence files" to see how I parsed  my data into the objects.
 </font>
+
 
 ## If you use my code to find tracrRNAs, please cite the paper <here> pending the publication. If you use parts of my code in research that isn't on identifying tracrRNAs, please cite this Github repository. If you have any questions or run into any issues, please feel free to [log them](https://github.com/skDooley/TRACR_RNA/issues) in the repository.
