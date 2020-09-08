@@ -47,7 +47,6 @@ class HMM_Parser:
     def __contains__(self, protName): return protName in self.results
 
 from os import path
-
 class HMM_Result:
     def __init__(self,filePath):
         hits = []
@@ -59,7 +58,10 @@ class HMM_Result:
     def __get_proteins__(self,filePath):
         # if not path.exists(filePath.replace(".hmmout",".orfs")): return
         orfFile = "sequences/orfs/" + filePath[filePath.rfind("/"):]
-
-        for rec in parse(orfFile.replace(".hmmout",".orfs"),"fasta"): #Assumes all hmm_results end with .hmmout and their corresponding orfs are in the same place but have a .orfs extension
+        orfFile=orfFile.replace("//","/").replace(".hmmout",".orfs")
+        if not path.exists(orfFile): 
+            print("Missing:",orfFile)
+            return
+        for rec in parse(orfFile,"fasta"): #Assumes all hmm_results end with .hmmout and their corresponding orfs are in the same place but have a .orfs extension
             if rec.id in self.hits: self.proteins[rec.id]=rec
     def __iter__(self): return iter(self.proteins.items())

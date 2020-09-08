@@ -14,7 +14,8 @@ parser.add_option("-r", "--reverse",
 if __name__ == "__main__":
 	#check to see if this is a mapping or a reverse mapping
 	if opts.reverse:
-		print "reversing"
+		print "Reversing"
+		# seqMap = load(open(args[0]+".map.p","rb"))
 
 	else:
 		print "Mapping"
@@ -27,5 +28,6 @@ if __name__ == "__main__":
 			map[newName] = seq.id
 			index +=1
 		tmpfile.close()
+		os.system("cp %s %s" % (args[0],args[0].replace(".fasta","_Original.fasta")))
 		os.system("mv tmpfile.fasta %s" % (args[0]))
-		dump(map,open(args[0]+".map.p","wb"))
+		# dump(map,open(args[0]+".map.p","wb"))

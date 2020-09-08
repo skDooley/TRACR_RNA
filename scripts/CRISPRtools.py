@@ -14,9 +14,9 @@ from easyFunctions import *
 from GetOrfs import *
 from HMMParser import HMM_Parser
 from os import path, stat 
-from pandas import DataFrame
+from pandas import DataFrame, read_csv
 from pickle import dump, load
-
+from RNA import fold as fold_rna
 ####################### CRISPR READING TOOLS ####################### 
 class FileWrapper:
     def __init__(self,filename):
@@ -36,15 +36,13 @@ class MinCEDReader(dict):
         self.ctype = False
         self.parse_file(FileWrapper(filename)); 
         self.calulate_consensus_seqs()
-    
     def readLocus(self, line, newLocus,file):
         while "--------" not in line:
             repeat = ""
             try: pos, empty, repeat, spacer, lengths = line.strip().split("\t")
             except ValueError: pos, empty, repeat = line.strip().split("\t")
             newLocus.add_crRNA(pos, repeat, spacer)
-            line = file.readline()
-                
+            line = file.readline()               
     def parse_file(self,file):
         line = ""
         newLocus = CRISPR("MinCED")
@@ -80,11 +78,9 @@ class MinCEDReader(dict):
             #2 blank lines
             file.readline()
             file.readline()
-            self[newLocus.name] = newLocus
-    
+            self[newLocus.name] = newLocus   
     def calulate_consensus_seqs(self): 
         for locus in self: self[locus].calc_consensus()
-    
     def getSeqName(self,line):
         firstquote = line.find("'")+1
         name = line[firstquote:line.find("'",firstquote)]
@@ -94,9 +90,16 @@ class MinCEDReader(dict):
 class PilerCRReader(dict):
     def __init__(self, filename): 
         self.ctype = True
-        self.parse_file(FileWrapper(filename))
+        self.nArrays = 0
+        self.parse_file(FileWrapper(filename))       
+    def parseN_Arrays(self,line):
+        colonIndex = line.find(":")+2
+        self.nArrays = int(line[colonIndex:line.find(" ",colonIndex)])
     def parse_file(self,fw):
-        for i in range(11):fw.readline()
+        for i in range(3):fw.readline()
+        self.parseN_Arrays(fw.readline())
+        if self.nArrays == 0: print("No arrays");return # No arrays found
+        for i in range(7):fw.readline()
         while fw.has_more_lines():
             line = fw.readline()#Array # in file
             if "SUMMARY BY SIMILARITY" in line: break
@@ -106,7 +109,8 @@ class PilerCRReader(dict):
                 self[contID] = CRISPR("PilerCR")
                 newLocus = self[contID]
                 newLocus.name = contID
-            else: newLocus = self[contID]
+            else: 
+                newLocus = self[contID]
             fw.readline() #Blank Line
             fw.readline() #Header
             fw.readline() #Divider line made of =======
@@ -122,6 +126,16 @@ class PilerCRReader(dict):
             newLocus.resolveRepeats(line)
             fw.readline() #Blank Line
             fw.readline() #Blank Line
+
+def isCircular(fold,repeatLen):
+    fb,lb = 0,len(fold)-1
+    foldStack=[]
+    for i in range(len(fold)):
+        if fold[i]=='.':continue
+        if fold[i]=="(": foldStack.append(i)         
+        else: fb,lb = foldStack.pop(),i
+    return fb<=repeatLen and lb>=(len(fold)-repeatLen)
+
 class CRISPR:
     def __init__(self,crisprType):
         self.name = ""
@@ -134,6 +148,7 @@ class CRISPR:
         self.antiRepeatCandidates = set()
         self.tracrRNACandidateSeqs = set()
         self.terminators = []
+        self.blastResults=None
         self.numBlastRes = 0
         # self.possibleTracrs = set()
         self.crisprType = crisprType
@@ -159,6 +174,7 @@ class CRISPR:
             self.consensusRepeats.add(maxSeq)
     def clusterBLASTResults(self, blastResults,protID):
         try:
+            # self.blastResults=blastResults
             self.antiRepeats={}
             self.numBlastRes = len(blastResults)
             spacerLen = len(max(self.spacers, key=len)) + 10
@@ -178,21 +194,73 @@ class CRISPR:
         except: pass
     def getAntiRepeatCandidates(self,fh,chrSeq):
         for antiRepeat in self.antiRepeats.values(): fh.write(antiRepeat.getSeq(chrSeq)+"\n")
-        fh.close()   
-    def getTracrRNA_Candidates(self,erpOut,fh):
-        crispr.terminators = []
+        fh.close()  
+    def hasStructure(self,fold):
+        loops = 0
+        inLoop = False
+        fb,lb = 0,len(fold)-1
+        foldStack=[]
+        for i in range(len(fold)):
+            if fold[i]=='.':continue
+            if fold[i]=="(": 
+                if not inLoop:
+                    loops+=1
+                    inLoop =True
+                foldStack.append(i)         
+            else: 
+                if inLoop:
+                    inLoop=False
+                fb,lb = foldStack.pop(),i
+        return loops > 1
+    def CheckFolds(self,seq):
+        repeats = list(self.consensusRepeats)
+        repeats.sort(key=len,reverse=True) #Make sure longer comes first
+        seq = seq.replace("T","U")
+        for repeat in repeats:
+            repeatLen = len(repeat)
+            if repeatLen+len(seq) > 350:continue
+            repeatRNA = repeat.replace("T","U")
+            sgRNA = repeatRNA + "GAAA" + seq
+            (fold,mfe) = fold_rna(sgRNA)
+            repeatPairingCount = fold[:len(repeat)].count("(") 
+            if (repeatPairingCount/len(repeat))*100.0>55.0 and self.hasStructure(fold): return True,sgRNA,fold,repeatRNA,True,repeatPairingCount,mfe
+            #Check the reverse complement of the repeat
+            repeatRNA = RC(repeat).replace("T","U")
+            sgRNA = repeatRNA + "GAAA" + seq
+            (fold,mfe) = fold_rna(sgRNA)
+            repeatPairingCount = fold[:len(repeat)].count("(")   
+            if (repeatPairingCount/len(repeat))*100.0>55.0 and self.hasStructure(fold): return True,sgRNA,fold,repeatRNA,False,repeatPairingCount,mfe
+        return False,None,None,None,None,0,0.0
+    def getTracrRNA_Candidates(self,erpOut,fh,sgs,folds):
+        self.terminators = []
+        self.tracrRNACandidateSeqs=set()
         for i,terminator in enumerate(erpOut.terminators):
             seq = erpOut.records[terminator.name]
             tracrSeq = ""
-            if terminator.upstream and not terminator.strand: tracrSeq = seq[terminator.Rholocation.start-1:].upper()
-            elif not terminator.upstream and terminator.strand: tracrSeq = seq[:terminator.Rholocation.end].upper()
-            if tracrSeq.count("N")>=4: continue
-            if tracrSeq != "":
-                terminator.seq = tracrSeq
-                self.terminators.append(terminator)
-                self.tracrRNACandidateSeqs.add(tracrSeq)
+            if not terminator.strand: tracrSeq = RC(str(seq[terminator.Rholocation.start-1:].upper()))
+            else: tracrSeq = seq[:terminator.Rholocation.end].upper()
+            # tracrSeq2 = ""
+            # if terminator.upstream and not terminator.strand: tracrSeq2 = seq[terminator.Rholocation.start-1:].upper()
+            # elif not terminator.upstream and terminator.strand: tracrSeq2 = seq[:terminator.Rholocation.end].upper()
+            # if tracrSeq!=tracrSeq2:
+            #     print(tracrSeq)
+            #     print(tracrSeq2)
+            #     print(terminator)
+            #     print(self.name)
+            # assert(tracrSeq==tracrSeq2)
+            if tracrSeq.count("N")>=4 or tracrSeq =="": continue
+            goodFold,sgRNA,fold,repeatRNA,repeatDir,foldCount,mfe = self.CheckFolds(tracrSeq)
+            if not goodFold: continue
+            terminator.seq = tracrSeq
+            self.terminators.append(terminator)
+            folds.write("%s_%i\t"%(self.name,i))
+            folds.write(("%s\t"*8)%(str(foldCount),str(len(repeatRNA)),str(terminator.strand),tracrSeq,sgRNA,fold,repeatRNA,str(repeatDir))+"\n")
+            if tracrSeq not in self.tracrRNACandidateSeqs: 
+                write([SeqRecord(id="%s_%i" % (self.name,i),description='',seq=Seq(sgRNA))],sgs,'fasta')
                 write([SeqRecord(id="%s_%i" % (self.name,i),description='',seq=Seq(tracrSeq))],fh,'fasta')
-                #fh.write(">%s_%i\n%s\n" % (,tracrSeq))
+                # There are multiples of the same sequence, to avoid over representation of that sequence we will skip writing it to the files
+            self.tracrRNACandidateSeqs.add(tracrSeq)
+            
         return len(self.tracrRNACandidateSeqs)
     def repeatSeqs(self,protID,fh):
         self.name = protID
@@ -211,6 +279,7 @@ class CRISPR:
     def setName(self,name): 
         self.name = name
         # self.crispr
+
 ####################################################################
 ####################### Entire Operon Tools  ####################### 
 def alignSequence(refSeq,fragment):
@@ -332,7 +401,6 @@ def casAnnotation(orfs,blastResultsFile,minCoord, maxCoord):
         for index in remove[::-1]: del orfs.records[id].features[index]
     return orfs, minCoord, maxCoord 
 
-
 class CasOperon:
     def __init__(self,asmName,crisprFile):
         self.assembly = asmName
@@ -444,8 +512,7 @@ class CRISPRs(dict):
         #Variables to check crispr files
         nCrisprs = len(crisprFiles)
         validExts = set([".pcrout",".mnout"])
-        percCutoff = int(nCrisprs*.15)
-        counter = 0
+        nPercCutoff = int(nCrisprs*.10)
         self.numCrisprFiles += nCrisprs
         if toolType: minSize = 200 #PilerCR File
         else: minSize = 0 #MinCED File
@@ -459,14 +526,13 @@ class CRISPRs(dict):
         # crisprFiles = needToCheck
         
         #Checking CRISPRs
-        for fileName in crisprFiles:
-            counter += 1
-            if counter % percCutoff == 0: print("\t%i%% of the way through with %i CRISPRs found" % (int((counter/float(nCrisprs))*100),len(self)))
+        for i,fileName in enumerate(crisprFiles):
+            if (i+1) % nPercCutoff == 0: print("\t%i%% of the way through with %i CRISPRs found" % (int((i/float(nCrisprs))*100),len(self)))
             fsize = stat(crisprPath+"/"+fileName).st_size
             baseAsmName, ext = baseFile(fileName)
             if fsize <= minSize or ext not in validExts:continue
-            try: self[baseAsmName].addCRISPR(crisprPath + fileName)
-            except: self[baseAsmName] = CasOperon(assemblyPath[baseAsmName],crisprPath+fileName)
+            try: self[baseAsmName].addCRISPR(crisprPath+"/" + fileName)
+            except: self[baseAsmName] = CasOperon(assemblyPath[baseAsmName],crisprPath+"/"+fileName)
 
 def readCRISPR(crisprFile):
     if ".pcrout" in crisprFile: return PilerCRReader(crisprFile)
@@ -485,24 +551,28 @@ class CasOperons:
     def __setitem__(self, key, locus): self.operons[key] = locus
     def __iter__(self): return iter(self.operons.items())
     def __getitem__(self, key):
+        if key in self:return self[key]
+        elif key in self.operons: return self.operons[key]
         return self.operons[self.seqMap[key]]
-
-        # if key in self.operons: 
-        #     return self.operons[self.seqMap[key]]
-            #self.operons[key].setName(key)
+        # if key in self.operons: return self.operons[self.seqMap[key]]; 
             # return self.operons[key] #super(CasOperons, self).__getitem__(key)
-        #self.operons[self.revMap[key]].setName(key)
         #return self.operons[self.revMap[key]] #super(CasOperons, self).__getitem__(self.revMap[key])       
     def hasCas9(self,hmmResultsDir,crisprs):
-        hmmFiles = os.listdir(hmmResultsDir)
+        hmmFiles = set(os.listdir(hmmResultsDir))
+        gca,gcf=set(),set()
+        for i,f in enumerate(hmmFiles):
+            if "GCF" in f: gcf.add(f[4:])
+            elif "GCA"  in f:gca.add(f[4:])
+        overlap = gca.intersection(gcf)
+        for asmID in overlap: hmmFiles.remove("GCA_"+asmID)
+        hmmFiles = list(hmmFiles)
+        hmmFiles.sort(reverse=True) #Ensures Patric2 processed last
         nHmmFiles = len(hmmFiles)
         print("Processing %i hmm files" % (nHmmFiles))
-        
         # Variables for checking hmm files
         validExts = set([".hmmout"])
         fivePercent = int(nHmmFiles*.05)
         counter = 0
-
         #Go through each file
         for fileName in hmmFiles:
             counter += 1
@@ -513,6 +583,7 @@ class CasOperons:
             if hmmHasResults(hmmResultsDir+"/"+fileName ,ext not in validExts): continue
             
             ##Parse the hmm results
+            # print(hmmResultsDir,fileName)
             proteins = HMM_Parser(hmmResultsDir+fileName).results
             
             ##Get the CHRs with proteins
@@ -524,6 +595,8 @@ class CasOperons:
             
             ##If there are hmm hits then check that the hit has a CRISPR on the same CHR
             ##Check for crispr overlap and store results
+            if baseAsmName not in crisprs: continue
+
             operon = crisprs[baseAsmName]
             for crisprFile in operon.crisprFiles:
                 #Read the CRISPR file
@@ -536,12 +609,14 @@ class CasOperons:
                 #For each chromosome and each protein on the chromosomes
                 for chromosome in chrOverlap:
                     for protID in chrsWithCas[chromosome]:
+                        if "(" in protID: protID = protID.replace("(","").replace(")","")
 
                         #add mapping information to all operons object 
                         self.seqMap[baseAsmName] = [chromosome,protID]
 
                         #Store the protein
-                        operon.prots[protID] = proteins[protID] 
+                        try: operon.prots[protID] = proteins[protID] 
+                        except: print("\nProtID: %s Doesn't exist from: %s\n" % (protID,baseAsmName))
 
                         #Store the Crispr results
                         try: operon.crispr[protID][crisprResults.ctype] = crisprResults[chromosome]
@@ -553,7 +628,7 @@ class CasOperons:
 
             # If there are proteins that also have a crispr, store them
             if len(operon.prots) > 0: self[baseAsmName] = operon
-        self.save()
+        self.save("HMM")
     
     def uniqueNukeSeqs(self,allCasAssembliesFile,allCasAminoAcidsFile):
         allCasSeqs = open(allCasAssembliesFile,"w")
@@ -562,15 +637,19 @@ class CasOperons:
         counter = 0
         percCutoff = int(len(self)*.10)
         casOnMultipleChrs = set()
-        metadata = open("tables/Cas9_Chr_Metadata.tsv","w")
         # for each assembly
-        for asmName, operon in self:
+        allAsms = list(self.keys())
+        allAsms.sort(reverse=True)
+        metadata = open("tables/Cas9_Chr_Metadata.tsv",'w')
+        for asmName in allAsms: #self.items():
+            operon=self[asmName]
             counter += 1
-            if counter % percCutoff == 0: print("Made it through %i of the operons" % (counter))
+            #if counter % percCutoff == 0: print("Made it through %i of the operons" % (counter))
 
             #If the assembly has multiple Cas9s on different chrs
             if len(operon.chrWoperon) > 1: 
                 casOnMultipleChrs.add(asmName)
+                for chrName, protIDs in operon.chrWoperon.items(): casOnMultipleChrs=casOnMultipleChrs.union(protIDs)
                 continue
 
             #Get the sequence of the assembly
@@ -578,6 +657,9 @@ class CasOperons:
 
             #For every chr that has a hit
             for chrName, protIDs in operon.chrWoperon.items():
+                if len(protIDs) > 1: 
+                    casOnMultipleChrs=casOnMultipleChrs.union(protIDs)
+                    continue
 
                 #Hash the nucleotide seq
                 chrSeqHash = hash(str(seqs[chrName].seq).strip().upper())
@@ -589,8 +671,8 @@ class CasOperons:
                 if chrSeqHash not in uniqNukSeqs:
                     operon.seq = seqs[chrName]
                     operon.seq.seq = operon.seq.seq.upper()
-                    if len(protIDs) > 1: self.multipleCas9s[chrName] = protIDs
-                    else: operon.seq.id = list(protIDs)[0]
+                    operon.seq.id = list(protIDs)[0]
+                    operon.protID = list(protIDs)[0]
                     for protID in protIDs:
                         #Prep the nucleotide and protein records
                         nuclRec = operon.seq
@@ -599,11 +681,13 @@ class CasOperons:
                         while nuclRec.id in addedIDs:
                             nuclRec.id = protID + "_DuplicateID_%i" % (protIndex)
                             protIndex+=1
+                        addedIDs.add(nuclRec.id)
                         protRec = operon.prots[protID]
                         protRec.id = nuclRec.id
                         metadata.write("\t".join([protID,nuclRec.description])+'\n')
+                        operon.seq.description = ''
                         nuclRec.description = ''
-                        protRec = ''
+                        protRec.description = ''
 
                         #Write the sequences to files
                         write(protRec,allAASeqs,"fasta")
@@ -626,20 +710,20 @@ class CasOperons:
         print("There are %i pseudochromosomes the have more than 1 Cas9" % (len(self.multipleCas9s)))
         dump(uniqNukSeqs,  open("pickles/%s_uniqSeqMap.p"    % self.gene,"wb"))
         dump(uniqNukSeqMap,open("pickles/%s_uniqSeqRevMap.p" % self.gene,"wb"))
-        self.save()
+        self.save("UniqueSeq")
     
     def getRepSeqs(self,hasGoodDomains,repSeqsFile,allCasRepsFile):
         repSeqs = open(repSeqsFile,'w')
         for rec in parse(allCasRepsFile,"fasta"):
-            if rec.id in hasGoodDomains: write(rec,repSeqs,"fasta")
+            if rec.id in hasGoodDomains and rec.id not in self.casOnMultipleChrs: write(rec,repSeqs,"fasta")
         repSeqs.close()
         print("Saved %i sequences to %s" % (len(hasGoodDomains),repSeqsFile))
 
-    def save(self):
+    def save(self,step):
         nCasOps = len(self)
         if nCasOps>0:
             print("Saving progress for %i Cas Operons" % nCasOps)
-            dump(self,open("pickles/%s_Operons.p" % self.gene, "wb"))
+            dump(self,open("pickles/%s_Operons_%s.p" % (self.gene,step), "wb"))
         
     def loadProgress(self):
         self.casOperons = load(open("pickles/casOperons.p","rb"))

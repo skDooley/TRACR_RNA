@@ -50,15 +50,14 @@ class Coordinate:
     def __sub__(self,other):return abs(self.start-other.start)+abs(self.end-other.end)
     def __len__(self):return max(self.start,self.end)-min(self.start,self.end)
     def contains(self,other): return self.start <= other.start and other.end <= self.end
-    def overlaps(self,other): # overlaps if 1 contains the other or they overlap
-        if self.start>self.end:
-            startBetween = self.end <= other.start and other.start <= self.start 
-            endBetween = self.end <= other.end and other.end <= self.start
-        else:
-            startBetween = self.start <= other.start and other.start <= self.end 
-            endBetween = self.start <= other.end and other.end <= self.end
+    def overlaps(self,other,ignoreStrand=True): # overlaps if 1 contains the other or they overlap
+        if not ignoreStrand:
+            if self.strand != other.strand:return False
+        startBetween = self.start >= other.start and self.start <= other.end 
+        endBetween = self.end >= other.start and self.end <= other.end
         contains = self.contains(other) or other.contains(self)
         return startBetween or endBetween or contains
+
     def distance(self,other):
         if self.overlaps(other):return 0
         return min(abs(self.start-other.start),
@@ -145,7 +144,7 @@ def parseBLAST(results,coordsOnly=True): #TODO:Currently coords only is the only
     for result in results:
         for alignment in result.alignments:
             for hsp in alignment.hsps: 
-                if hsp.strand[0] is not None: print( hsp.strand+"WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW")
+                # if hsp.strand[0] is not None: print( hsp.strand,"WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW")
                 coords.append(Coordinate(hsp.sbjct_start-1,hsp.sbjct_end))
     return coords
 
@@ -154,7 +153,7 @@ def parseSingleBLAST(results): # For single blast ID because the results are all
         for result in results:
             for alignment in result.alignments:
                 for hsp in alignment.hsps: 
-                    if hsp.strand[0] is not None: print( hsp.strand+"WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW")
+                    # if hsp.strand[0] is not None: print( hsp.strand,"WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW")
                     # print (hsp)
                     # if hsp.expect < 0.00005:
                     coords.append(Coordinate(hsp.sbjct_start-1,hsp.sbjct_end))

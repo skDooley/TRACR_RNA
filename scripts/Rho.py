@@ -12,14 +12,33 @@ class ErpinOut:
         for rec in parse(inputfile,"fasta"): self.records[rec.id]=str(rec.seq)
         self.numRecords = len(self.records)
         with open(outfile) as file:
-            for i in range(9): file.readline()
-            capture = False
+            for i in range(10): file.readline()
+            skip=False
             for line in file:
-                if capture: 
+                if line.strip() == '':break
+                if skip:
+                    skip = not skip
+                    continue
+                if (">" in line): seqName = line.strip().replace(">","")
+                else: 
+                    skip = not skip
                     line = line.strip().replace("  "," ").replace("  "," ").replace("  "," ")
-                    self.terminators.append(RhoIndTerminator(seqName,line.split(" ")))
-                capture = (">" in line)
-                if capture: seqName = line.strip().replace(">","")
+                    newRho = RhoIndTerminator(seqName,line.split(" "))
+                    if (newRho.strand and newRho.upstream) or (not newRho.strand and not newRho.upstream): continue
+                    try:
+                        lastRho = self.terminators[-1]
+                        if lastRho.name == newRho.name and lastRho.strand == newRho.strand: #same location and strand
+                            if not newRho.strand: self.terminators[-1]=newRho #Replace because this on is shorter
+                        else: self.terminators.append(newRho)
+                    except: self.terminators.append(newRho)
+                    # try:
+                    #     lastRho = self.terminators[-1]
+                    #     if lastRho.upstream == newRho.upstream and lastRho.name == newRho.name and lastRho.strand == newRho.strand:
+                    #         lastShorter = lastRho.Rholocation.end < newRho.Rholocation.end
+                    #         if newRho.upstream and lastShorter: self.terminators[-1] = newRho
+                    #         elif not newRho.upstream and not lastShorter: self.terminators[-1] = newRho
+                    #     else: self.terminators.append(newRho)
+                    # except: self.terminators.append(newRho)
 
 class RhoTermPredictOut:
     def __init__(self,seqFile="tmp/possibleTracrs.fasta",rhoPredictFile="tmp/RhoPredictions.xlsx"):
