@@ -17,7 +17,7 @@ Once these steps are complete, you are ready to launch Jupyter Notebook server a
 
 
 #### Usage
-The python notebooks here were created to work together (See the note below if you want to pluggin results from a different CRISPR-Cas finding tool). Within the notebooks themselves, all user input is identified by a coding cell descripton with the <div class="alert alert-block alert-danger">red background of jupyter notebook markdown warnings.</div> All cells with a <div class="alert alert-block alert-success">green background</div> above the code can be run without user input.
+The python notebooks here were created to work together (See the <font style="color:red">note</font>font> below if you want to pluggin results from a different CRISPR-Cas finding tool). Within the notebooks themselves, all user input is identified by a coding cell descripton with the red background of jupyter notebook markdown warnings. All cells with a green background above the coding cells can be run without user input.
 
 **CRISPR_CasFinding.ipynb** takes a directory (or directories) and recursively walks through the directory to identify any files with the extensions: fasta, fna, or fa. The notebook then provides code to create bash scripts to search for CRISPR arrays and proteins that are similary to those found in data/proteins/DiverseCas9s.faa. Additionally, CRISPR_CasFinding.ipynb also uses data/hmm/phi_domains.hmm to identify the 3 RuvC subdomains and the HNH domain of all the assemblies found using the hmm.
 
@@ -25,8 +25,8 @@ The python notebooks here were created to work together (See the note below if y
 
 
 
-[note]
+<font style="color:red">
  It is possible to use notebooks separately, but data needs to be processed into objects that are recognized by the code in the notebook(s) you want to use. If you choose to not use the CRISPR-Cas finding options, determine how to plug your results into the objects in scripts/CRISPRtools.py. Once your results are parsed into the CRISPRtools' objects, pickle the CasOperons objects. See "Process the CRISPR results" and "Read the HMM results and create protein and nucleotide sequence files" to see how I parsed  my data into the objects.
-[/note]
+</font>
 
-## If you use my code to find tracrRNAs, please cite the paper <here> pending the publication. If you use parts of my code in research that isn't on identifying tracrRNAs, please cite this Github repository. If you have any questions or run into any issues, please feel free to [log them](https://github.com/skDooley/TRACR_RNA/issues). in the repository.
+## If you use my code to find tracrRNAs, please cite the paper <here> pending the publication. If you use parts of my code in research that isn't on identifying tracrRNAs, please cite this Github repository. If you have any questions or run into any issues, please feel free to [log them](https://github.com/skDooley/TRACR_RNA/issues) in the repository.
