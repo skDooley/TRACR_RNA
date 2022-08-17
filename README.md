@@ -36,4 +36,4 @@ The python notebooks here were created to work together (See the <font style="co
 </font>
 
 
-## If you use my code to find tracrRNAs, please cite the paper <here> pending the publication. If you use parts of my code in research that isn't on identifying tracrRNAs, please cite this Github repository. If you have any questions or run into any issues, please feel free to [log them](https://github.com/skDooley/TRACR_RNA/issues) in the repository.
+## If you use my code to find tracrRNAs, please cite the paper [Identification and Evolution of Cas9 tracrRNAs](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8336202/). If you use parts of my code in research that isn't on identifying tracrRNAs, please cite this Github repository. If you have any questions or run into any issues, please feel free to [log them](https://github.com/skDooley/TRACR_RNA/issues) in the repository.
