@@ -3,7 +3,6 @@
 import sys
 import re
 try:
-	from Bio.Alphabet import generic_dna
 	from Bio.Seq import Seq, reverse_complement, translate
 	from Bio.SeqRecord import SeqRecord
 	from Bio.SeqFeature import SeqFeature, FeatureLocation
@@ -98,7 +97,7 @@ class GetORFs:
 	def parseRecs(self):	
 		in_count = 0
 		out_count = 0		
-		for record in SeqIO.parse(self.inputFile, GetORFs.seq_format, generic_dna):
+		for record in SeqIO.parse(self.inputFile, GetORFs.seq_format):
 			self.records[record.id] = record
 			for i, (f_start, f_end, f_strand, n, t) in enumerate(self.get_all_peptides(str(record.seq).upper())):
 				if len(t) < self.cutoff:continue
